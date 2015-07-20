@@ -1,11 +1,99 @@
-#include <iostream>
-#include <cmath>
-#include <fstream>
+#include "csr.h"
 
 using namespace std;
 
 
+double* CG(csr& A, double* b)
+{
+	int num = A.colNum;
+	double tolerance = 1000*DBL_EPSILON;
+	double* rOld = new double[num];
+	double* p = new double[num];
+	double* rNew = new double[num];
+	double* x = new double[num];
+	int j;
 
+	for (int i = 0; i < num; i++)
+	{
+		rOld[i] = b[i];
+		p[i] = b[i];
+		x[i] = 0;
+	}
+
+	double alpha = 0;
+	double beta = 0;
+	double temp1 = 0, temp2 = 0;
+	double temp = 0;
+	double residual;
+	double residualOld = 0;
+	for (int i = 0; i < num; i++)
+	{
+		residualOld = residualOld + rOld[i]*rOld[i];
+	}
+
+
+	
+	for (int k = 0; k < 2*num; k++)
+	{
+		temp1 = 0;
+		temp2 = 0;
+		for (int i = 0; i < num; i++)
+		{
+			for (int n = A.indptr[i]; n < A.indptr[i+1]; n++)
+			{
+				j = A.col[n];
+				temp2 = temp2 + p[i]*A.val[n]*p[j];
+			}
+		}
+		alpha = residualOld/temp2;
+	
+		for (int i = 0; i < num; i++)
+		{
+			x[i] = x[i] +alpha*p[i];
+			temp = 0;
+			for (int n = A.indptr[i]; n < A.indptr[i+1]; n++)
+			{
+				j = A.col[n];
+				temp = temp + A.val[n]*p[j];
+			}
+			rNew[i] = rOld[i] - alpha*temp;
+		}
+
+		residual = 0;
+		for (int i = 0; i < num; i++)
+		{
+			residual = residual + rNew[i]*rNew[i];
+			//cout<<rNew[i]<<endl;
+		}
+
+		temp = sqrt(abs(residual));
+		if (k%10==0)
+		{
+			cout<<".";
+		}
+		cout<<k<<" "<<temp<<endl;
+		if (temp < tolerance)
+		{
+			delete rNew, rOld, p;
+			cout<<"CG iterataion : "<<k<<endl;
+			cout<< endl;
+			return x;
+		}
+
+		beta = residual/residualOld;
+
+		for (int i = 0; i < num; i++)
+		{
+			p[i] = rNew[i] + beta*p[i];
+			rOld[i] = rNew[i];
+		}
+		residualOld = residual;
+	
+	}
+	delete rNew, rOld, p;
+	return x;
+	
+}
 
 double* CG(int num, double** A, double* b)
 {
@@ -94,7 +182,7 @@ double* CG(int num, double** A, double* b)
 
 double* CG(int num, double* A, double* b)
 {
-	double tolerance = 10*DBL_EPSILON;
+	double tolerance = 1000*DBL_EPSILON;
 	double* rOld = new double[num];
 	double* p = new double[num];
 	double* rNew = new double[num];
@@ -112,20 +200,24 @@ double* CG(int num, double* A, double* b)
 	double temp1 = 0, temp2 = 0;
 	double temp = 0;
 	double residual;
+	double residualOld = 0;
+	for (int i = 0; i < num; i++)
+	{
+		residualOld = residualOld + rOld[i]*rOld[i];
+	}
 
-	for (int k = 0; k < 1000; k++)
+	for (int k = 0; k < 2*num; k++)
 	{
 		temp1 = 0;
 		temp2 = 0;
 		for (int i = 0; i < num; i++)
 		{
-			temp1 = temp1 + rOld[i]*rOld[i];
 			for (int j = 0; j < num; j++)
 			{
 				temp2 = temp2 + p[i]*A[i*num + j]*p[j];
 			}
 		}
-		alpha = temp1/temp2;
+		alpha = residualOld/temp2;
 	
 		for (int i = 0; i < num; i++)
 		{
@@ -142,40 +234,34 @@ double* CG(int num, double* A, double* b)
 		for (int i = 0; i < num; i++)
 		{
 			residual = residual + rNew[i]*rNew[i];
+			//cout<<rNew[i]<<endl;
 		}
-		residual = sqrt(residual);
 
-		if (residual < tolerance)
+		temp = sqrt(abs(residual));
+
+		cout<<k<<" "<<temp<<endl;
+		if (temp < tolerance)
 		{
 			delete rNew, rOld, p;
+			cout<<"CG iterataion : "<<k<<endl;
+			cout<< endl;
 			return x;
 		}
 
-		temp1 = 0;
-		temp2 = 0;
-		for (int i = 0; i < num; i++)
-		{
-			temp1 = temp1 + rNew[i]*rNew[i];
-			temp2 = temp2 + rOld[i]*rOld[i];
-		}
-		beta = temp1/temp2;
+		beta = residual/residualOld;
 
 		for (int i = 0; i < num; i++)
 		{
 			p[i] = rNew[i] + beta*p[i];
-		}
-	
-		for (int i = 0; i < num; i++)
-		{
 			rOld[i] = rNew[i];
 		}
-
+		residualOld = residual;
+	
 	}
 	delete rNew, rOld, p;
 	return x;
 	
 }
-
 double** incompleteCholesky(int num, double** A)
 {
 	double** L;

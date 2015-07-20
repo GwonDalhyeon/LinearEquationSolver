@@ -7,31 +7,16 @@ void main()
 	double* b = new double[num];
 	double* x = new double[num];
 
-	A[0*num + 0] = 4;
-	A[0*num + 1] = 3;
-	A[0*num + 2] = 2;
-	A[0*num + 3] = 1;
+	for (int i = 0; i < num; i++)
+	{
 
-	A[1*num + 0] = 3;
-	A[1*num + 1] = 3;
-
-	A[1*num + 2] = 2;
-	A[1*num + 3] = 1;
-	
-	A[2*num + 0] = 2;
-	A[2*num + 1] = 2;
-	A[2*num + 2] = 2;
-	A[2*num + 3] = 1;
-	
-	A[3*num + 0] = 1;
-	A[3*num + 1] = 1;
-	A[3*num + 2] = 1;
-	A[3*num + 3] = 1;
+	}
 
 	b[0] = 16, b[1] = 17;
 	b[2] = 15, b[3] = 9;
-
-	x = PCG(num,A,b);
+	csr sparseA = csr(num, num, A);
+	x = CG(sparseA,b);
+	//x = PCG(num,A,b);
 
 	for (int i = 0; i < num; i++)
 	{
